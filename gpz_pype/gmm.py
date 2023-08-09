@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from astropy.table import Table
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import RobustScaler
 
@@ -234,24 +235,33 @@ The training set will be used as population."
 
         prob_i = self.gmm_pop.predict_proba(X)
 
-        self.mixture_samples = {}
+        mixture_samples = Table()
+        mixture_samples["index"] = np.arange(len(X))
+        mixture_samples["best"] = np.argmax(prob_i, axis=1)
 
         for mx in range(self.ncomp):
             i_sample = np.where(prob_i[:, mx] > self.threshold)[0]
 
-            if len(i_sample) > 0:
-                self.mixture_samples[
-                    f"{mx}_X"
-                ] = self.rescaler.inverse_transform(X[i_sample])
-                if weight:
-                    self.mixture_samples[f"{mx}_w"] = weights[i_sample]
+            column = np.zeros(len(X), dtype=bool)
+            column[i_sample] = True
 
-            else:
-                self.mixture_samples[f"{mx}_X"] = None
-                if weight:
-                    self.mixture_samples[f"{mx}_w"] = None
+            mixture_samples[f"m{mx}"] = column
 
-        return self
+            if column.sum() == 0:
+                logging.warning(
+                    f"The mixture sample {mx} is empty.\
+                Check the threshold or consider few mixture components."
+                )
+            elif column.sum() < 10:
+                logging.warning(
+                    f"The mixture sample {mx} has fewer than 10 samples.\
+                Check the threshold or consider few mixture components."
+                )
+
+        if weight:
+            mixture_samples["weights"] = weights
+
+        return mixture_samples
 
     def calc_weights(self, X_train, X_pop=None, eta=0.001, max_weight=100):
         """Calculate the weights for the training set.
@@ -295,6 +305,72 @@ The training set will be used as population."
         weights[weights > max_weight] = max_weight
 
         return weights
+
+
+def kl_score(
+    X_pop, X_train, weights=None, nbins=30, min_pct=0.1, max_pct=99.9
+):
+    """Calculate the Kullback-Leibler divergence between the population and the training set.
+
+    The model score is calculated as the sum of the Kullback-Leibler divergence of each feature
+    of the population, using the histogram of the population and the training set.
+    The histogram range is defined by the minimum and maximum percentiles of the population.
+
+
+    Parameters
+    ----------
+    X_pop : array-like, shape (n_samples, n_features)
+        The data to train the GMM model.
+
+    X_train : array-like, shape (n_samples, n_features)
+        The data to train the GMM model.
+
+    weights : array-like, shape (n_samples, )
+        The weights for the training set. Optional
+
+    nbins : int, default=30
+        Number of bins for the histogram.
+
+    min_pct : float, default=0.1
+        Minimum percentile for the histogram range.
+
+    max_pct : float, default=99.9
+        Maximum percentile for the histogram range.
+
+    Returns
+    -------
+    score_orig : float
+        The Kullback-Leibler divergence between the population and the training set.
+
+    score_weight : float
+        The Kullback-Leibler divergence between the population and the weighted training set.
+        If weights is None, score_weight is np.nan.
+
+    """
+    from scipy.stats import entropy
+
+    nfeat = X_train.shape[1]
+
+    score_orig = np.ones(nfeat) * np.nan
+    score_weight = np.ones(nfeat) * np.nan
+
+    for i in range(nfeat):
+        x_t, bins = np.histogram(
+            X_pop[:, i],
+            density=True,
+            bins=nbins,
+            range=np.percentile(X_pop[:, i], [min_pct, max_pct]),
+        )
+        x_o, bins = np.histogram(X_train[:, i], density=True, bins=bins)
+        score_orig[i] = entropy(x_o, x_t)
+
+        if weights is not None:
+            x_w, bins = np.histogram(
+                X_train[:, i], density=True, bins=bins, weights=weights
+            )
+            score_weight[i] = entropy(x_w, x_t)
+
+    return score_orig.sum(), score_weight.sum()
 
 
 if __name__ == "__main__":

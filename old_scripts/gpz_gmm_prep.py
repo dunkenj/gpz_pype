@@ -5,6 +5,7 @@ import astropy.units as u
 import os
 import glob
 import pickle
+import copy
 
 from sklearn.model_selection import train_test_split
 from sklearn.mixture import GaussianMixture, BayesianGaussianMixture

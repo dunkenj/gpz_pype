@@ -35,11 +35,32 @@ def alphas_mag(mags, intcp, slope, base = 14.):
     return alphas
 
 class Params(object):
+    """
+    Class to read and write gpz++ parameter files.
+    """
+
     def __init__(self, input_path=None):
+        """
+        Parameters
+        ----------
+        input_path : str, optional
+            Path to parameter file to read.    
+        """
+
         if input_path != None:
             self.read(input_path)
 
     def read(self, file):
+        """
+        Read parameter file.
+        
+        Parameters
+        ----------
+        file : str
+            Path to parameter file to read.
+            
+        """
+
         with open(file, 'r') as param:
             lines = param.readlines()
             self.params = OrderedDict()
@@ -54,12 +75,21 @@ class Params(object):
                     self.params[parts[0].strip()] = parts[1].strip()
 
     def write(self, file=None):
+        """
+        Write parameter file.
+
+        Parameters
+        ----------
+        file : str, optional
+            Path to parameter file to write.  If not specified, will print to screen.   
+        """
         if file == None:
             print('No output file specified...')
         else:
             output = open(file, 'w')
             for param in self.params.keys():
-                output.write('{0:30s} = {1}\n'.format(param, self.params[param]))
+                if param[0] != '#':
+                    output.write('{0:30s} = {1}\n'.format(param, self.params[param]))
                     #str = '%-25s %'+self.formats[param]+'\n'
             #
             output.close()
@@ -67,6 +97,17 @@ class Params(object):
     def __getitem__(self, param_name):
         """
         Get item from ``params`` dict.
+
+        Parameters
+        ----------
+        param_name : str
+            Name of parameter to get.
+
+        Returns
+        -------
+        param : str
+            Value of parameter.
+
         """
         if param_name not in self.params.keys():
             print('Column {0} not found.  Check `column_names` attribute.'.format(param_name))
