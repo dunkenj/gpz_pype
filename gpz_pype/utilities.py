@@ -14,6 +14,28 @@ nanovega_to_ujy_w1 = 10 ** ((23.9 - 2.699 - 22.5) / 2.5)
 
 nanovega_to_ujy_w2 = 10 ** ((23.9 - 3.339 - 22.5) / 2.5)
 
+import contextlib
+import sys
+from time import sleep
+
+from tqdm import tqdm
+from tqdm.contrib import DummyTqdmFile
+
+@contextlib.contextmanager
+def std_out_err_redirect_tqdm():
+    orig_out_err = sys.stdout, sys.stderr
+    try:
+        # sys.stdout = sys.stderr = DummyTqdmFile(orig_out_err[0])
+        sys.stdout, sys.stderr = map(DummyTqdmFile, orig_out_err)
+        yield orig_out_err[0]
+    # Relay exceptions
+    except Exception as exc:
+        raise exc
+    # Always restore sys.stdout/err if necessary
+    finally:
+        sys.stdout, sys.stderr = orig_out_err
+
+
 
 def makedir(path):
     if os.path.isdir(path) == False:
@@ -174,15 +196,16 @@ def flux_to_lupt(flux, fluxerr, b):
     )
     return lupt, lupterr
 
-def basic_lupt_soft(flux, flux_err, unit=u.uJy, f0=3631*u.Jy, scale = 1.05):
+
+def basic_lupt_soft(flux, flux_err, unit=u.uJy, f0=3631 * u.Jy, scale=1.05):
     try:
         f0 = f0.to(unit)
     except:
         raise
 
-    snr = flux/flux_err
+    snr = flux / flux_err
     snr_cut = (snr > 4) * (snr < 8)
-    
+
     if flux_err.unit:
         try:
             rms_err = (np.nanmedian(flux_err[snr_cut])).to(unit)
@@ -191,6 +214,8 @@ def basic_lupt_soft(flux, flux_err, unit=u.uJy, f0=3631*u.Jy, scale = 1.05):
 
     else:
         # Assume units equal to value
-        rms_err = (np.nanmedian(flux_err[snr_cut])*unit).to(unit)
-    
+        rms_err = (np.nanmedian(flux_err[snr_cut]) * unit).to(unit)
+
     return scale * (rms_err.value / f0.value)
+
+

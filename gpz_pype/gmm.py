@@ -1,3 +1,26 @@
+"""
+Gaussian Mixture Model (GMM) for Photo-z augmentation.
+
+This module contains the Gaussian Mixture Model (GMM) for Photo-z
+augmentation. The GMM is trained with the reference population and
+the training set. 
+
+A given catalogue of sources can then be divided into mixture samples
+based on the GMM for the reference population. Cost-sensitive learning
+weights can also be calculated based on the relative densities of the
+training and reference GMMs.
+
+The module contains the following classes:
+
+- GMMbasic: Gaussian Mixture Model (GMM) for Photo-z augmentation with
+    sklearn.
+
+This module includes the following functions:
+
+- kl_score: Kullback-Leibler divergence between two GMMs.
+
+"""
+
 import logging
 
 import numpy as np
@@ -13,47 +36,33 @@ class GMMbasic(object):
     ----------
     ncomp : int
         Number of components for the GMM model.
-
     niter : int
         Number of iterations for the GMM model.
-
     tol : float
         Tolerance for the GMM model.
-
     random_state : int
         Random state for the GMM model.
-
     scale : bool
         If True, the data is scaled before training the GMM model.
-
     threshold : float
         Threshold for the GMM model.
-
     scaler : sklearn.preprocessing.RobustScaler
         Scaler for the GMM model.
-
     gmm_pop : sklearn.mixture.GaussianMixture
         GMM model for the population.
-
     gmm_train : sklearn.mixture.GaussianMixture
         GMM model for the training set.
-
     mixture_samples : dict
         Dictionary with the mixture samples for the population and
         the training set.
-
     preprocess : function
         Function to preprocess the data before training the GMM model.
-
     fit : function
         Function to train the GMM model.
-
     population : function
         Function to train the GMM model for the population.
-
     train : function
         Function to train the GMM model for the training set.
-
     divide : function
         Function to divide the training set into mixture samples.
 
@@ -78,28 +87,20 @@ class GMMbasic(object):
 
         X_pop : array-like, shape (n_samples, n_features)
             The data array for the reference population.
-
         X_train : array-like, shape (n_samples, n_features)
             The data array for the training sample.
-
         Y_train : array-like, shape (n_samples,)
             The labels for the training sample.
-
         ncomp : int, default=10
             Number of components for the GMM model.
-
         threshold : float, default=0.5
             Threshold for the GMM model.
-
         niter : int, default=100
             Number of iterations for the GMM model.
-
         tol : float, default=1e-3
             Tolerance for the GMM model.
-
         random_state : int, default=0
             Random state for the GMM model.
-
         scale : bool, default=True
             If True, the data is scaled before training the GMM model.
 
@@ -203,7 +204,9 @@ The training set will be used as population."
         self.gmm_train = self.fit(X)
         return self
 
-    def divide(self, X, weight=False, eta=0.001, max_weight=100):
+    def divide(
+        self, X, weight=False, eta=0.001, max_weight=10, return_density=False
+    ):
         """Divide the input array into mixture samples.
 
         Parameters
@@ -211,15 +214,21 @@ The training set will be used as population."
 
         X : array-like, shape (n_samples, n_features)
             The input data to map onto the GMM.
-
         weight : bool, default=False
             If True, the cost-sensitive learning weights are calculated.
-
         eta : float, default=0.001
             Softening parameter for the weights.
-
         max_weight : float, default=100
             Maximum weight for the weights.
+        return_density : bool, default=False
+            If True, the density of the sample for each mixture component
+            is returned. For use with predictions with multiple components.
+
+        Returns
+        -------
+        mixture_samples : dict
+            Dictionary with the mixture samples for the population and
+            the training set.
 
         """
         if not isinstance(self.gmm_pop, GaussianMixture):
@@ -247,15 +256,18 @@ The training set will be used as population."
 
             mixture_samples[f"m{mx}"] = column
 
+            if return_density:
+                mixture_samples[f"p{mx}"] = prob_i[:, mx]
+
             if column.sum() == 0:
                 logging.warning(
                     f"The mixture sample {mx} is empty.\
-                Check the threshold or consider few mixture components."
+                Check the threshold or consider fewer mixture components."
                 )
             elif column.sum() < 10:
                 logging.warning(
                     f"The mixture sample {mx} has fewer than 10 samples.\
-                Check the threshold or consider few mixture components."
+                Check the threshold or consider fewer mixture components."
                 )
 
         if weight:
@@ -270,13 +282,10 @@ The training set will be used as population."
         ----------
         X_train : array-like, shape (n_samples, n_features)
             The data to train the GMM model.
-
         X_pop : array-like, shape (n_samples, n_features)
             The data to train the GMM model.
-
         eta : float, default=0.001
             Softening parameter for the weights.
-
         max_weight : float, default=100
             Maximum weight to apply to the training set.
 
@@ -321,19 +330,14 @@ def kl_score(
     ----------
     X_pop : array-like, shape (n_samples, n_features)
         The data to train the GMM model.
-
     X_train : array-like, shape (n_samples, n_features)
         The data to train the GMM model.
-
     weights : array-like, shape (n_samples, )
         The weights for the training set. Optional
-
     nbins : int, default=30
         Number of bins for the histogram.
-
     min_pct : float, default=0.1
         Minimum percentile for the histogram range.
-
     max_pct : float, default=99.9
         Maximum percentile for the histogram range.
 
@@ -341,7 +345,6 @@ def kl_score(
     -------
     score_orig : float
         The Kullback-Leibler divergence between the population and the training set.
-
     score_weight : float
         The Kullback-Leibler divergence between the population and the weighted training set.
         If weights is None, score_weight is np.nan.
