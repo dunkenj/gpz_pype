@@ -1,2 +1,45 @@
 site_name: gpz_pype
-theme: readthedocs
+theme: 
+  name: material
+  features:
+    - navigation.footer
+    - navigation.tabs
+    - navigation.tabs.sticky
+  icon:
+    logo: material/cosine-wave
+  palette: 
+    # Palette toggle for light mode
+    - scheme: default
+      primary: blue grey
+      accent: deep orange
+      toggle:
+        icon: material/weather-night 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: deep orange
+      accent: blue grey
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    
+repo_url: https://github.com/dunkenj/gpz_pype
+repo_name: GitHub/gpz_pype
+
+
+plugins:
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        selection:
+          docstring_style: numpy
+        rendering:
+          show_source: false
+
+nav: 
+ - Home: index.md
+ - GMM Augmentation: gmm.md
+ - Running GPz: gpz.md
+  
