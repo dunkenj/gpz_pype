@@ -205,7 +205,8 @@ The training set will be used as population."
         return self
 
     def divide(
-        self, X, weight=False, eta=0.001, max_weight=10, return_density=False
+        self, X, weight=False, threshold=None,
+        eta=0.001, max_weight=100, return_density=False,   
     ):
         """Divide the input array into mixture samples.
 
@@ -214,6 +215,9 @@ The training set will be used as population."
 
         X : array-like, shape (n_samples, n_features)
             The input data to map onto the GMM.
+        threshold : float, default=None
+            Threshold for the GMM model. If None, the default threshold
+            is used.
         weight : bool, default=False
             If True, the cost-sensitive learning weights are calculated.
         eta : float, default=0.001
@@ -236,7 +240,7 @@ The training set will be used as population."
 
         if weight:
             weights = self.calc_weights(
-                X_train=X, X_pop=None, eta=0.001, max_weight=100
+                X_train=X, X_pop=None, eta=eta, max_weight=max_weight
             )
 
         if self.scale:
@@ -248,8 +252,11 @@ The training set will be used as population."
         mixture_samples["index"] = np.arange(len(X))
         mixture_samples["best"] = np.argmax(prob_i, axis=1)
 
+        if threshold is None:
+            threshold = self.threshold
+
         for mx in range(self.ncomp):
-            i_sample = np.where(prob_i[:, mx] > self.threshold)[0]
+            i_sample = np.where(prob_i[:, mx] > threshold)[0]
 
             column = np.zeros(len(X), dtype=bool)
             column[i_sample] = True

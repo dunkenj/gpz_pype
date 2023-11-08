@@ -301,6 +301,8 @@ class GPz(object):
             Basename for output files.
         gmm_output : astroy.table.Table
             GMM divide and/or weight output catalog.
+        bash_script: bool
+            If True, output gpz++ commands to a bash script instead of running.
         mag_prefix : str, optional
             Prefix for magnitude columns.  Default is 'mag_'.
         error_prefix : str, optional
