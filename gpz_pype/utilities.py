@@ -9,9 +9,7 @@ from astropy.table import Column, Table, vstack
 f0 = (3631 * u.Jy).to(u.uJy).value
 
 nanomaggy_to_ujy = 10 ** ((23.9 - 22.5) / 2.5)
-
 nanovega_to_ujy_w1 = 10 ** ((23.9 - 2.699 - 22.5) / 2.5)
-
 nanovega_to_ujy_w2 = 10 ** ((23.9 - 3.339 - 22.5) / 2.5)
 
 import contextlib

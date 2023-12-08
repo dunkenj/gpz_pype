@@ -125,6 +125,8 @@ class GPz(object):
         catalog,
         outdir,
         basename,
+        mode="train",
+        model=None,
         label=None,
         mag_prefix="mag_",
         error_prefix="magerr_",
@@ -150,6 +152,10 @@ class GPz(object):
             Output directory.
         basename : str
             Basename for output files.
+        mode : str, optional
+            Mode to run GPz in.  Default is 'train'. Other options are 'predict'.
+        model : str, optional
+            Path to GPz model file.  Default is None.
         label : str, optional
             Label to append to output files.
         mag_prefix : str, optional
@@ -208,43 +214,62 @@ class GPz(object):
         else:
             rootname = f"{outdir}/{basename}_{label}"
 
-        # Run GPz
-        index = np.arange(len(catalog))
-        i_train, i_test = train_test_split(index, test_size=test_fraction)
+        if mode == "train":
+            run_params['REUSE_MODEL'] = '0'
 
-        train_path = f"{rootname}_train.txt"
-        catalog[i_train].write(
-            train_path, format="ascii.commented_header", overwrite=True
-        )
+            # Run GPz
+            index = np.arange(len(catalog))
+            i_train, i_test = train_test_split(index, test_size=test_fraction)
 
-        test_path = f"{rootname}_test.txt"
-        catalog[i_test].write(
-            test_path, format="ascii.commented_header", overwrite=True
-        )
+            train_path = f"{rootname}_train.txt"
+            catalog[i_train].write(
+                train_path, format="ascii.commented_header", overwrite=True
+            )
 
-        output_cat = f"{rootname}_output.txt"
-        output_model = f"{rootname}_model.dat"
+            test_path = f"{rootname}_test.txt"
+            catalog[i_test].write(
+                test_path, format="ascii.commented_header", overwrite=True
+            )
 
-        if os.path.exists(output_model):
-            logging.warning(f"Removing existing model file {output_model}")
-            os.remove(output_model)
-            os.remove(output_cat)
+            output_cat = f"{rootname}_output.txt"
+            output_model = f"{rootname}_model.dat"
 
-        run_params["TRAIN_VALID_RATIO"] = (
-            1 - (test_fraction + valid_fraction)
-        ) / (1 - test_fraction)
-        run_params["TRAINING_CATALOG"] = os.path.abspath(train_path)
-        run_params["PREDICTION_CATALOG"] = os.path.abspath(test_path)
-        run_params["OUTPUT_CATALOG"] = os.path.abspath(output_cat)
-        run_params["MODEL_FILE"] = os.path.abspath(output_model)
-        run_params["NUM_BF"] = int(basis_functions)
+            if os.path.exists(output_model):
+                logging.warning(f"Removing existing model file {output_model}")
+                os.remove(output_model)
+                os.remove(output_cat)
+
+            run_params["TRAIN_VALID_RATIO"] = (
+                1 - (test_fraction + valid_fraction)
+            ) / (1 - test_fraction)
+            run_params["TRAINING_CATALOG"] = os.path.abspath(train_path)
+            run_params["PREDICTION_CATALOG"] = os.path.abspath(test_path)
+            run_params["OUTPUT_CATALOG"] = os.path.abspath(output_cat)
+            run_params["MODEL_FILE"] = os.path.abspath(output_model)
+            run_params["NUM_BF"] = int(basis_functions)
+
+        elif mode == "predict":
+            output_model = model
+            run_params['REUSE_MODEL'] = '1'
+
+            # Run GPz
+            predict_path = f"{rootname}_predict.txt"
+            catalog.write(predict_path, format="ascii.commented_header", overwrite=True)
+
+            output_cat = f"{rootname}_prediction_output.txt"
+
+            run_params['TRAINING_CATALOG'] = ''
+            run_params["PREDICTION_CATALOG"] = os.path.abspath(predict_path)
+            run_params["OUTPUT_CATALOG"] = os.path.abspath(output_cat)
+            run_params["MODEL_FILE"] = os.path.abspath(output_model)
+
 
         param_path = f"{rootname}.param"
         run_params.write(param_path)
 
         run_string = f"{self.gpz_path} {os.path.abspath(param_path)}"
 
-        if do_iteration:
+        if mode == "train" and do_iteration:
             run_params["COVARIANCE"] = iter_cov
             run_params["USE_MODEL_AS_HINT"] = "1"
             iter_param_path = f"{rootname}_{iter_cov}.param"
@@ -254,12 +279,20 @@ class GPz(object):
                 "\n" + f"{self.gpz_path} {os.path.abspath(iter_param_path)}"
             )
 
-        file_paths = {'train': train_path, 
-                      'test': test_path, 
-                      'output_cat': output_cat, 
+        file_paths = {'output_cat': output_cat, 
                       'output_model': output_model,
                       'param': param_path,
                       }
+        
+        if mode == 'train':
+            file_paths['test'] = test_path
+            file_paths['train'] = train_path
+        elif mode == 'predict':
+            file_paths['predict'] = predict_path
+            try:
+                self.paths['predict'] = predict_path
+            except:
+                self.paths = {'predict': predict_path}
 
         if do_iteration:
             file_paths['iter_param'] = iter_param_path
@@ -352,6 +385,7 @@ class GPz(object):
                 catalog,
                 outdir,
                 basename,
+                mode="train",
                 mag_prefix=mag_prefix,
                 error_prefix=error_prefix,
                 z_col=z_col,
@@ -392,6 +426,8 @@ class GPz(object):
                     
                     for col in outcat.colnames[1:]:
                         incat[col] = outcat[col]
+
+                    self.paths = paths
 
                     return incat, paths
 
@@ -537,4 +573,253 @@ class GPz(object):
                     merged_output = vstack(merged_output)
                     merged_output.sort("id")
 
+                    self.paths = path_dict
+
                     return merged_output, path_dict
+                
+    def predict(self, catalog, outdir, basename, 
+                gmm_output=None, bash_script=False, mag_prefix="mag_", 
+                error_prefix="magerr_", z_col="z_spec", id_col="id", 
+                weight_col=None, output_min=0, output_max=7, verbose=False, **kwargs):
+        """
+        Run GPz training and prediction for a given input catalogue.
+
+        Parameters
+        ----------
+        catalog : astropy.table.Table, str
+            Catalog to run GPz on. If str, will read in catalog from file.
+        outdir : str
+            Output directory.
+        basename : str
+            Basename for output files.
+        gmm_output : astroy.table.Table
+            GMM divide and/or weight output catalog.
+        bash_script: bool
+            If True, output gpz++ commands to a bash script instead of running.
+        mag_prefix : str, optional
+            Prefix for magnitude columns.  Default is 'mag_'.
+        error_prefix : str, optional
+            Prefix for magnitude error columns.  Default is 'magerr_'.
+        z_col : str, optional
+            Name of spectroscopic redshift column.  Default is 'z_spec'.
+        weight_col : str, optional
+            Name of weight column.  Default is None.
+        verbose : bool, optional
+            If True, will print out GPz++ output.  Default is False.
+        **kwargs : dict, optional
+            Additional keyword arguments to pass to Table.read()
+
+        Returns
+        -------
+        incat : astropy.table.Table
+            Input catalog with GPz predictions appended.
+        paths : dict
+            Dictionary of paths to output files.
+        
+        """
+
+        capture_output = not verbose
+
+        if isinstance(catalog, Table):
+            catalog = catalog.copy()
+        elif isinstance(catalog, str):
+            catalog = Table.read(catalog, **kwargs)
+
+        catalog[id_col].name = "id"
+
+        rootname = f"{outdir}/{basename}"
+
+        if gmm_output is None:
+            model = self.paths['output_model']
+
+            run_string, paths = self.prep_gpz(
+                catalog,
+                outdir,
+                basename,
+                mode = 'predict',
+                model=model,
+                mag_prefix=mag_prefix,
+                error_prefix=error_prefix,
+                z_col=z_col,
+                weight_col=weight_col,
+                output_min=output_min,
+                output_max=output_max,
+            )
+
+            if bash_script:
+                with open(f"{outdir}/{basename}.sh", "w") as f:
+                    f.write(run_string + "\n")
+
+            else:
+                run = subprocess.run(
+                    run_string, shell=True, capture_output=capture_output,
+                )
+
+                if run.returncode != 0 and not verbose:
+                    logging.error(
+                        f"GPz++ run failed with error: {run.stdout.decode()}"
+                    )
+                    return None
+
+                elif run.returncode != 0 and verbose:
+                    return None
+
+                else:
+                    logging.info(f"GPz++ run completed successfully.")
+
+                    incat = Table.read(paths['predict'], format='ascii.commented_header')
+                    outcat = Table.read(paths['output_cat'], 
+                                        format='ascii.commented_header', header_start=10)
+                    
+                    for col in outcat.colnames[1:]:
+                        incat[col] = outcat[col]
+
+                    return incat, paths
+
+        elif isinstance(gmm_output, Table):
+            if weight_col is not None:
+                if (
+                    weight_col in catalog.colnames
+                    and weight_col in gmm_output.colnames
+                ):
+                    logging.info(
+                        "Multiple weight columns found, using weights from input catalog."
+                    )
+                    weights = catalog[weight_col]
+
+                elif (
+                    weight_col in catalog.colnames
+                    and weight_col not in gmm_output.colnames
+                ):
+                    logging.info("Using weights from input catalog.")
+                    weights = catalog[weight_col]
+
+                elif (
+                    weight_col not in catalog.colnames
+                    and weight_col in gmm_output.colnames
+                ):
+                    logging.info("Using weights from GMM output catalog.")
+                    weights = gmm_output[weight_col]
+
+                else:
+                    logging.info(
+                        "No weight column found, using equal weights."
+                    )
+                    weights = np.ones(len(catalog))
+
+            catalog[weight_col] = weights
+
+            mixtures = np.sort(np.unique(gmm_output["best"]))
+            nmixtures = len(mixtures)
+
+            if nmixtures == 1:
+                model = self.paths[0]['output_model']
+
+                run_string, paths = self.prep_gpz(
+                    catalog,
+                    outdir,
+                    basename,
+                    mode = 'predict',
+                    model=model,
+                    mag_prefix=mag_prefix,
+                    error_prefix=error_prefix,
+                    z_col=z_col,
+                    weight_col=weight_col,
+                    output_min=output_min,
+                    output_max=output_max
+                )
+            else:
+                output_capture = []
+                path_dict = {}
+
+                nbasis = total_basis_functions // nmixtures
+
+
+                pbar = tqdm(total=nmixtures, file=sys.stdout,
+                            dynamic_ncols=True, desc=f"GPz++ Run")
+
+                with nostdout():
+                    for i in range(nmixtures):
+                        pbar.set_description(f"GPz++ Run (mixture {i+1}/{nmixtures})")
+                        mixture = mixtures[i]
+                        mixture_cat = catalog[gmm_output["best"] == mixture]
+
+                        model = self.paths[i]['output_model']
+
+
+                        run_string, paths = self.prep_gpz(
+                            mixture_cat,
+                            outdir,
+                            basename,
+                            label=f'm{mixture}',
+                            mode = 'predict',
+                            model=model,
+                            mag_prefix=mag_prefix,
+                            error_prefix=error_prefix,
+                            z_col=z_col,
+                            weight_col=weight_col,
+                            output_min=output_min,
+                            output_max=output_max,
+                        )
+
+                        if bash_script:
+                            if i == 0:
+                                with open(
+                                    f"{outdir}/{basename}_m{mixture}.sh", "w"
+                                ) as f:
+                                    f.write(run_string + "\n")
+                            else:
+                                with open(
+                                    f"{outdir}/{basename}_m{mixture}.sh", "a"
+                                ) as f:
+                                    f.write(run_string + "\n")
+
+                        else:
+                            run = subprocess.run(
+                                run_string, shell=True, capture_output=capture_output,
+                            )
+
+                            if run.returncode != 0 and not verbose:
+                                logging.error(
+                                    f"GPz++ run failed with error: {run.stdout.decode()}"
+                                )
+                                return None
+
+                            elif run.returncode != 0 and verbose:
+                                return None
+
+                            output_capture.append(run)
+                            path_dict[mixture] = paths
+                        
+                        pbar.update(1)
+
+                pbar.close()
+
+                if bash_script:
+                    logging.info(f"GPz++ run scripts written to {outdir}.")
+                    return None
+
+                else:
+                    logging.info(f"GPz++ run completed successfully.")
+
+                    merged_output = []
+
+                    for i, mixture in enumerate(mixtures):
+                        incat = Table.read(path_dict[mixture]['predict'], format='ascii.commented_header')
+                        outcat = Table.read(path_dict[mixture]['output_cat'], 
+                                            format='ascii.commented_header', header_start=10)
+                        
+                        for col in outcat.colnames[1:]:
+                            incat[col] = outcat[col]
+                        
+                        merged_output.append(incat)
+                    
+                    merged_output = vstack(merged_output)
+                    merged_output.sort("id")
+
+                    return merged_output, path_dict
+
+
+
+            
+        

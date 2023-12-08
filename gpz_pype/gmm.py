@@ -321,6 +321,221 @@ The training set will be used as population."
         weights[weights > max_weight] = max_weight
 
         return weights
+    
+    def save(self, filename):
+        """
+        Save the GMM model to file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to save the GMM model.
+
+        """
+        import pickle
+
+        data = {
+            "gmm_pop": self.gmm_pop,
+            "gmm_train": self.gmm_train,
+            "ncomp": self.ncomp,
+            "niter": self.niter,
+            "tol": self.tol,
+            "random_state": self.random_state,
+            "scale": self.scale,
+            "threshold": self.threshold,
+        }
+
+        if self.scale:
+            data["rescaler"] = self.rescaler
+
+        # Save the GMM models
+        with open(filename, 'wb') as f:
+            pickle.dump(data, f)
+
+    def load(self, filename):
+        """
+        Load the GMM model from file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to load the GMM model.
+
+        """
+        import pickle
+
+        # Load the GMM models
+        with open(filename, 'rb') as f:
+            data = pickle.load(f)
+
+        self.gmm_pop = data['gmm_pop']
+        self.gmm_train = data['gmm_train']
+        self.ncomp = data['ncomp']
+        self.niter = data['niter']
+        self.tol = data['tol']
+        self.random_state = data['random_state']
+        self.scale = data['scale']
+        self.threshold = data['threshold']
+
+        if self.scale:
+            try:
+                self.rescaler = data['rescaler']
+            except KeyError:
+                logging.warning(
+                    "The rescaler is not defined.\
+                    The data will not be scaled."
+                )
+                self.scale = False
+
+        return self
+
+# Make a new class based on GMMbasic but using XDGMM instead of GMM
+class XDGMMbasic(GMMbasic):
+    """Gaussian Mixture Model (GMM) for Photo-z augmentation with sklearn.
+
+    Attributes
+    ----------
+    ncomp : int
+        Number of components for the GMM model.
+    niter : int
+        Number of iterations for the GMM model.
+    tol : float
+        Tolerance for the GMM model.
+    random_state : int
+        Random state for the GMM model.
+    scale : bool
+        If True, the data is scaled before training the GMM model.
+    threshold : float
+        Threshold for the GMM model.
+    scaler : sklearn.preprocessing.RobustScaler
+        Scaler for the GMM model.
+    gmm_pop : sklearn.mixture.GaussianMixture
+        GMM model for the population.
+    gmm_train : sklearn.mixture.GaussianMixture
+        GMM model for the training set.
+    mixture_samples : dict
+        Dictionary with the mixture samples for the population and
+        the training set.
+    preprocess : function
+        Function to preprocess the data before training the GMM model.
+    fit : function
+        Function to train the GMM model.
+    population : function
+        Function to train the GMM model for the population.
+    train : function
+        Function to train the GMM model for the training set.
+    divide : function
+        Function to divide the training set into mixture samples.
+
+    """
+
+    def __init__(
+        self,
+        X_pop: np.ndarray = None,
+        X_train: np.ndarray = None,
+        Y_train: np.ndarray = None,
+        ncomp: int = 10,
+        threshold: float = 0.5,
+        niter: int = 100,
+        tol: float = 1e-3,
+        random_state: int = 0,
+        scale: bool = True,
+    ):
+        """
+
+        Parameters
+        ----------
+
+        X_pop : array-like, shape (n_samples, n_features)
+            The data array for the reference population.
+        X_train : array-like, shape (n_samples, n_features)
+            The data array for the training sample.
+        Y_train : array-like, shape (n_samples,)
+            The labels for the training sample.
+        ncomp : int, default=10
+            Number of components for the GMM model.
+        threshold : float, default=0.5
+            Threshold for the GMM model.
+        niter : int, default=100
+            Number of iterations for the GMM model.
+        tol : float, default=1e-3
+            Tolerance for the GMM model.
+        random_state : int, default=0
+            Random state for the GMM model.
+        scale : bool, default=True
+            If True, the data is scaled before training the GMM model.
+
+        """
+
+        super().__init__(
+            X_pop=X_pop,
+            X_train=X_train,
+            Y_train=Y_train,
+            ncomp=ncomp,
+            threshold=threshold,
+            niter=niter,
+            tol=tol,
+            random_state=random_state,
+            scale=scale,
+        )
+
+        from astroML.density_estimation import XDGMM
+
+        
+    def fit(self, X):
+        """Train the GMM model.
+
+        Parameters
+        ----------
+
+        X : array-like, shape (n_samples, n_features)
+            The data to train the GMM model.
+
+        Returns
+        -------
+
+        gmm : sklearn.mixture.GaussianMixture
+            GMM model.
+
+        """
+        if self.scale:
+            X = self.rescaler.transform(X)
+
+        gmm = XDGMM(
+            n_components=self.ncomp,
+            n_iter=self.niter,
+            tol=self.tol,
+        )
+        gmm.fit(X)
+        return gmm
+    
+    def population(self, X):
+        """Train the GMM model for the population.
+
+        Parameters
+        ----------
+
+        X : array-like, shape (n_samples, n_features)
+            The data to train the GMM model.
+
+        """
+        self.gmm_pop = self.fit(X)
+        return self
+    
+    def train(self, X):
+        """Train the GMM model for the training set.
+
+        Parameters
+        ----------
+
+        X : array-like, shape (n_samples, n_features)
+            The data to train the GMM model.
+
+        """
+        self.gmm_train = self.fit(X)
+        return self
+    
+    def divide
 
 
 def kl_score(
