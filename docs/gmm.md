@@ -1,7 +1,5 @@
 # Gaussian Mixture Model Augmentation
 
-## Introduction
-
 ## Example GMM Divide + Cost-sensitive Learning Calculations
 
 The basic functionality for the Gaussian Mixture Model (GMM) sample division and cost-sensitive learning is contained in the `GMMbasic` class. The training of the respective GMMs is done internally within the class, and is effectively a wrapper around the [sci-kit learn/GaussianMixture](https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html#sklearn.mixture.GaussianMixture) classes with all its functionality.
@@ -105,10 +103,6 @@ weights_run, paths = test.run_training( # All of these as above but with minor c
     )
 ```
 
-    WARNING:root:Removing existing model file test_dir/candels_cosmos_weighted_model.dat
-
-
-
 ```python
 Fig, Ax = plt.subplots(1,2,figsize=(9,4))
 
@@ -144,12 +138,6 @@ for i, ax in enumerate(Ax):
 
 ```
 
-    /var/folders/4h/l82f8_jx1476t0k78sdtfq5w0000gn/T/ipykernel_70492/3209683446.py:3: RuntimeWarning: invalid value encountered in log10
-      return np.log10(1+x)
-
-
-
-    
 ![png](figures/gpz_pype%20-%20How-to%20guide_39_1.png)
     
 
