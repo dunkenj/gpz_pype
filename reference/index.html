@@ -178,8 +178,8 @@
 
 
   <li class="md-tabs__item">
-    <a href="../gmm/" class="md-tabs__link">
-      GMM Augmentation
+    <a href="../gpz/" class="md-tabs__link">
+      Running GPz
     </a>
   </li>
 
@@ -190,8 +190,8 @@
 
 
   <li class="md-tabs__item">
-    <a href="../gpz/" class="md-tabs__link">
-      Running GPz
+    <a href="../gmm/" class="md-tabs__link">
+      GMM Augmentation
     </a>
   </li>
 
@@ -269,8 +269,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../gmm/" class="md-nav__link">
-        GMM Augmentation
+      <a href="../gpz/" class="md-nav__link">
+        Running GPz
       </a>
     </li>
   
@@ -284,8 +284,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../gpz/" class="md-nav__link">
-        Running GPz
+      <a href="../gmm/" class="md-nav__link">
+        GMM Augmentation
       </a>
     </li>
   
@@ -341,6 +341,13 @@
         <li class="md-nav__item">
   <a href="#gpz_pype.base.GPz.__init__" class="md-nav__link">
     __init__()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gpz_pype.base.GPz.predict" class="md-nav__link">
+    predict()
   </a>
   
 </li>
@@ -505,8 +512,230 @@ script.</p>
 
 
 
+<h2 id="gpz_pype.base.GPz.predict" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">gmm_output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bash_script</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">id_col</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Run GPz training and prediction for a given input catalogue.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>catalog</code></td>
+          <td>
+                <code>(astropy.<span title="astropy.table">table</span>.<span title="astropy.table.Table">Table</span>, str)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Catalog to run GPz on. If str, will read in catalog from file.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>outdir</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Output directory.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>basename</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Basename for output files.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>gmm_output</code></td>
+          <td>
+                <code>astroy.<span title="astroy.table">table</span>.<span title="astroy.table.Table">Table</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>GMM divide and/or weight output catalog.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bash_script</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, output gpz++ commands to a bash script instead of running.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>mag_prefix</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Prefix for magnitude columns.  Default is 'mag_'.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;mag_&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>error_prefix</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Prefix for magnitude error columns.  Default is 'magerr_'.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;magerr_&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>z_col</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of spectroscopic redshift column.  Default is 'z_spec'.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;z_spec&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>weight_col</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of weight column.  Default is None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>verbose</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, will print out GPz++ output.  Default is False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>**kwargs</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Additional keyword arguments to pass to Table.read()</p>
+            </div>
+          </td>
+          <td>
+                <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>incat</code></td>          <td>
+                <code>astropy.<span title="astropy.table">table</span>.<span title="astropy.table.Table">Table</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Input catalog with GPz predictions appended.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>paths</code></td>          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dictionary of paths to output files.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
 <h2 id="gpz_pype.base.GPz.prep_gpz" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">prep_gpz</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">basis_functions</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">prep_gpz</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">basis_functions</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></code>
 
 </h2>
 
@@ -569,6 +798,34 @@ for a given input catalogue.</p>
           </td>
           <td>
               <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>mode</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Mode to run GPz in.  Default is 'train'. Other options are 'predict'.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;train&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>model</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Path to GPz model file.  Default is None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
           </td>
         </tr>
         <tr>
@@ -822,7 +1079,7 @@ Default is False.</p>
 
 
 <h2 id="gpz_pype.base.GPz.run_training" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">run_training</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">gmm_output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bash_script</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">id_col</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">total_basis_functions</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">run_training</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">gmm_output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bash_script</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">id_col</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">total_basis_functions</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bf_distribution</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">min_basis_functions</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -898,6 +1155,19 @@ Default is False.</p>
           </td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bash_script</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, output gpz++ commands to a bash script instead of running.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
           </td>
         </tr>
         <tr>
@@ -1053,6 +1323,37 @@ Default is False.</p>
           </td>
           <td>
                 <code>100</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bf_distribution</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Basis function distribution.  Default is 'uniform'.
+Other options are 'sqrt' and 'linear', which will distribute basis functions
+according to the square root and linear of the number of training objects in
+each mixture, respectively.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;uniform&#39;</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>min_basis_functions</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Minimum number of basis functions per mixture.  Default is 10.</p>
+            </div>
+          </td>
+          <td>
+                <code>10</code>
           </td>
         </tr>
         <tr>
