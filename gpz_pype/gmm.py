@@ -205,8 +205,13 @@ The training set will be used as population."
         return self
 
     def divide(
-        self, X, weight=False, threshold=None,
-        eta=0.001, max_weight=100, return_density=False,   
+        self,
+        X,
+        weight=False,
+        threshold=None,
+        eta=0.001,
+        max_weight=100,
+        return_density=False,
     ):
         """Divide the input array into mixture samples.
 
@@ -321,7 +326,7 @@ The training set will be used as population."
         weights[weights > max_weight] = max_weight
 
         return weights
-    
+
     def save(self, filename):
         """
         Save the GMM model to file.
@@ -349,7 +354,7 @@ The training set will be used as population."
             data["rescaler"] = self.rescaler
 
         # Save the GMM models
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             pickle.dump(data, f)
 
     def load(self, filename):
@@ -365,21 +370,21 @@ The training set will be used as population."
         import pickle
 
         # Load the GMM models
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             data = pickle.load(f)
 
-        self.gmm_pop = data['gmm_pop']
-        self.gmm_train = data['gmm_train']
-        self.ncomp = data['ncomp']
-        self.niter = data['niter']
-        self.tol = data['tol']
-        self.random_state = data['random_state']
-        self.scale = data['scale']
-        self.threshold = data['threshold']
+        self.gmm_pop = data["gmm_pop"]
+        self.gmm_train = data["gmm_train"]
+        self.ncomp = data["ncomp"]
+        self.niter = data["niter"]
+        self.tol = data["tol"]
+        self.random_state = data["random_state"]
+        self.scale = data["scale"]
+        self.threshold = data["threshold"]
 
         if self.scale:
             try:
-                self.rescaler = data['rescaler']
+                self.rescaler = data["rescaler"]
             except KeyError:
                 logging.warning(
                     "The rescaler is not defined.\
@@ -388,6 +393,7 @@ The training set will be used as population."
                 self.scale = False
 
         return self
+
 
 # Make a new class based on GMMbasic but using XDGMM instead of GMM
 class XDGMMbasic(GMMbasic):
@@ -481,7 +487,6 @@ class XDGMMbasic(GMMbasic):
 
         from astroML.density_estimation import XDGMM
 
-        
     def fit(self, X):
         """Train the GMM model.
 
@@ -508,7 +513,7 @@ class XDGMMbasic(GMMbasic):
         )
         gmm.fit(X)
         return gmm
-    
+
     def population(self, X):
         """Train the GMM model for the population.
 
@@ -521,7 +526,7 @@ class XDGMMbasic(GMMbasic):
         """
         self.gmm_pop = self.fit(X)
         return self
-    
+
     def train(self, X):
         """Train the GMM model for the training set.
 
@@ -534,8 +539,6 @@ class XDGMMbasic(GMMbasic):
         """
         self.gmm_train = self.fit(X)
         return self
-    
-    def divide
 
 
 def kl_score(

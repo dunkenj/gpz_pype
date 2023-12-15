@@ -8,36 +8,36 @@ This module includes the following classes:
 
 """
 
+import contextlib
 import copy
 import logging
 import multiprocessing as mp
 import os
-import numpy as np
 import subprocess
+import sys
 
+import numpy as np
 from astropy.table import Table, vstack
-
 from sklearn.model_selection import train_test_split
-
+from tqdm import tqdm
 
 from .gmm import GMMbasic
+
 # gpz_pype class
 from .utilities import Params, std_out_err_redirect_tqdm
 
-import contextlib
-import sys
-
-from tqdm import tqdm
 
 class DummyFile(object):
-  file = None
-  def __init__(self, file):
-    self.file = file
+    file = None
 
-  def write(self, x):
-    # Avoid print() second call (useless \n)
-    if len(x.rstrip()) > 0:
-        tqdm.write(x, file=self.file)
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, x):
+        # Avoid print() second call (useless \n)
+        if len(x.rstrip()) > 0:
+            tqdm.write(x, file=self.file)
+
 
 @contextlib.contextmanager
 def nostdout():
@@ -45,6 +45,7 @@ def nostdout():
     sys.stdout = DummyFile(sys.stdout)
     yield
     sys.stdout = save_stdout
+
 
 class GPz(object):
     """
@@ -215,7 +216,7 @@ class GPz(object):
             rootname = f"{outdir}/{basename}_{label}"
 
         if mode == "train":
-            run_params['REUSE_MODEL'] = '0'
+            run_params["REUSE_MODEL"] = "0"
 
             # Run GPz
             index = np.arange(len(catalog))
@@ -250,19 +251,20 @@ class GPz(object):
 
         elif mode == "predict":
             output_model = model
-            run_params['REUSE_MODEL'] = '1'
+            run_params["REUSE_MODEL"] = "1"
 
             # Run GPz
             predict_path = f"{rootname}_predict.txt"
-            catalog.write(predict_path, format="ascii.commented_header", overwrite=True)
+            catalog.write(
+                predict_path, format="ascii.commented_header", overwrite=True
+            )
 
             output_cat = f"{rootname}_prediction_output.txt"
 
-            run_params['TRAINING_CATALOG'] = ''
+            run_params["TRAINING_CATALOG"] = ""
             run_params["PREDICTION_CATALOG"] = os.path.abspath(predict_path)
             run_params["OUTPUT_CATALOG"] = os.path.abspath(output_cat)
             run_params["MODEL_FILE"] = os.path.abspath(output_model)
-
 
         param_path = f"{rootname}.param"
         run_params.write(param_path)
@@ -279,23 +281,24 @@ class GPz(object):
                 "\n" + f"{self.gpz_path} {os.path.abspath(iter_param_path)}"
             )
 
-        file_paths = {'output_cat': output_cat, 
-                      'output_model': output_model,
-                      'param': param_path,
-                      }
-        
-        if mode == 'train':
-            file_paths['test'] = test_path
-            file_paths['train'] = train_path
-        elif mode == 'predict':
-            file_paths['predict'] = predict_path
+        file_paths = {
+            "output_cat": output_cat,
+            "output_model": output_model,
+            "param": param_path,
+        }
+
+        if mode == "train":
+            file_paths["test"] = test_path
+            file_paths["train"] = train_path
+        elif mode == "predict":
+            file_paths["predict"] = predict_path
             try:
-                self.paths['predict'] = predict_path
+                self.paths["predict"] = predict_path
             except:
-                self.paths = {'predict': predict_path}
+                self.paths = {"predict": predict_path}
 
         if do_iteration:
-            file_paths['iter_param'] = iter_param_path
+            file_paths["iter_param"] = iter_param_path
 
         return run_string, file_paths
 
@@ -318,6 +321,8 @@ class GPz(object):
         do_iteration=False,
         iter_cov="gpvc",
         total_basis_functions=100,
+        bf_distribution="uniform",
+        min_basis_functions=10,
         verbose=False,
         **kwargs,
     ):
@@ -359,6 +364,13 @@ class GPz(object):
             Covariance type to use for 2nd iteration.  Default is 'gpvc'.
         total_basis_functions : int, optional
             Total number of basis functions to use.  Default is 100.
+        bf_distribution : str, optional
+            Basis function distribution.  Default is 'uniform'.
+            Other options are 'sqrt' and 'linear', which will distribute basis functions
+            according to the square root and linear of the number of training objects in
+            each mixture, respectively.
+        min_basis_functions : int, optional
+            Minimum number of basis functions per mixture.  Default is 10.
         verbose : bool, optional
             If True, will print out GPz++ output.  Default is False.
         **kwargs : dict, optional
@@ -377,8 +389,8 @@ class GPz(object):
             catalog = catalog.copy()
         elif isinstance(catalog, str):
             catalog = Table.read(catalog, **kwargs)
-        
-        catalog[id_col].name = "id"        
+
+        catalog[id_col].name = "id"
 
         if gmm_output is None:
             run_string, paths = self.prep_gpz(
@@ -405,7 +417,9 @@ class GPz(object):
 
             else:
                 run = subprocess.run(
-                    run_string, shell=True, capture_output=capture_output,
+                    run_string,
+                    shell=True,
+                    capture_output=capture_output,
                 )
 
                 if run.returncode != 0 and not verbose:
@@ -420,10 +434,15 @@ class GPz(object):
                 else:
                     logging.info(f"GPz++ run completed successfully.")
 
-                    incat = Table.read(paths['test'], format='ascii.commented_header')
-                    outcat = Table.read(paths['output_cat'], 
-                                        format='ascii.commented_header', header_start=10)
-                    
+                    incat = Table.read(
+                        paths["test"], format="ascii.commented_header"
+                    )
+                    outcat = Table.read(
+                        paths["output_cat"],
+                        format="ascii.commented_header",
+                        header_start=10,
+                    )
+
                     for col in outcat.colnames[1:]:
                         incat[col] = outcat[col]
 
@@ -488,15 +507,36 @@ class GPz(object):
                 output_capture = []
                 path_dict = {}
 
-                nbasis = total_basis_functions // nmixtures
+                if bf_distribution == "uniform":
+                    nbasis = np.ones(nmixtures) * (total_basis_functions // nmixtures)
+                elif nbasis == "sqrt":
+                    train_sizes = np.array([mixtures[f'm{i}'] for i in range(nmixtures)])
+                    train_sqrt = np.sqrt(train_sizes)
+                    train_sqrt /= np.sum(train_sqrt)
 
+                    shared_basis = total_basis_functions - (nmixtures * min_basis_functions)
+                    nbasis = np.round(train_sqrt * shared_basis) + min_basis_functions
+                elif nbasis == "linear":
+                    train_sizes = np.array([mixtures[f'm{i}'] for i in range(nmixtures)])
+                    train_linear = train_sizes / np.sum(train_sizes)
 
-                pbar = tqdm(total=nmixtures, file=sys.stdout,
-                            dynamic_ncols=True, desc=f"GPz++ Run")
+                    shared_basis = total_basis_functions - (nmixtures * min_basis_functions)
+                    nbasis = np.round(train_linear * shared_basis) + min_basis_functions
+                else:
+                    raise ValueError(f"Unknown basis function distribution {bf_distribution}")
+
+                pbar = tqdm(
+                    total=nmixtures,
+                    file=sys.stdout,
+                    dynamic_ncols=True,
+                    desc=f"GPz++ Run",
+                )
 
                 with nostdout():
                     for i in range(nmixtures):
-                        pbar.set_description(f"GPz++ Run (mixture {i+1}/{nmixtures})")
+                        pbar.set_description(
+                            f"GPz++ Run (mixture {i+1}/{nmixtures})"
+                        )
                         mixture = mixtures[i]
                         mixture_cat = catalog[gmm_output["best"] == mixture]
 
@@ -504,7 +544,7 @@ class GPz(object):
                             mixture_cat,
                             outdir,
                             basename,
-                            label=f'm{mixture}',
+                            label=f"m{mixture}",
                             mag_prefix=mag_prefix,
                             error_prefix=error_prefix,
                             z_col=z_col,
@@ -532,7 +572,9 @@ class GPz(object):
 
                         else:
                             run = subprocess.run(
-                                run_string, shell=True, capture_output=capture_output,
+                                run_string,
+                                shell=True,
+                                capture_output=capture_output,
                             )
 
                             if run.returncode != 0 and not verbose:
@@ -546,7 +588,7 @@ class GPz(object):
 
                             output_capture.append(run)
                             path_dict[mixture] = paths
-                        
+
                         pbar.update(1)
 
                 pbar.close()
@@ -561,26 +603,45 @@ class GPz(object):
                     merged_output = []
 
                     for i, mixture in enumerate(mixtures):
-                        incat = Table.read(path_dict[mixture]['test'], format='ascii.commented_header')
-                        outcat = Table.read(path_dict[mixture]['output_cat'], 
-                                            format='ascii.commented_header', header_start=10)
-                        
+                        incat = Table.read(
+                            path_dict[mixture]["test"],
+                            format="ascii.commented_header",
+                        )
+                        outcat = Table.read(
+                            path_dict[mixture]["output_cat"],
+                            format="ascii.commented_header",
+                            header_start=10,
+                        )
+
                         for col in outcat.colnames[1:]:
                             incat[col] = outcat[col]
-                        
+
                         merged_output.append(incat)
-                    
+
                     merged_output = vstack(merged_output)
                     merged_output.sort("id")
 
                     self.paths = path_dict
 
                     return merged_output, path_dict
-                
-    def predict(self, catalog, outdir, basename, 
-                gmm_output=None, bash_script=False, mag_prefix="mag_", 
-                error_prefix="magerr_", z_col="z_spec", id_col="id", 
-                weight_col=None, output_min=0, output_max=7, verbose=False, **kwargs):
+
+    def predict(
+        self,
+        catalog,
+        outdir,
+        basename,
+        gmm_output=None,
+        bash_script=False,
+        mag_prefix="mag_",
+        error_prefix="magerr_",
+        z_col="z_spec",
+        id_col="id",
+        weight_col=None,
+        output_min=0,
+        output_max=7,
+        verbose=False,
+        **kwargs,
+    ):
         """
         Run GPz training and prediction for a given input catalogue.
 
@@ -615,7 +676,7 @@ class GPz(object):
             Input catalog with GPz predictions appended.
         paths : dict
             Dictionary of paths to output files.
-        
+
         """
 
         capture_output = not verbose
@@ -630,13 +691,13 @@ class GPz(object):
         rootname = f"{outdir}/{basename}"
 
         if gmm_output is None:
-            model = self.paths['output_model']
+            model = self.paths["output_model"]
 
             run_string, paths = self.prep_gpz(
                 catalog,
                 outdir,
                 basename,
-                mode = 'predict',
+                mode="predict",
                 model=model,
                 mag_prefix=mag_prefix,
                 error_prefix=error_prefix,
@@ -652,7 +713,9 @@ class GPz(object):
 
             else:
                 run = subprocess.run(
-                    run_string, shell=True, capture_output=capture_output,
+                    run_string,
+                    shell=True,
+                    capture_output=capture_output,
                 )
 
                 if run.returncode != 0 and not verbose:
@@ -667,10 +730,15 @@ class GPz(object):
                 else:
                     logging.info(f"GPz++ run completed successfully.")
 
-                    incat = Table.read(paths['predict'], format='ascii.commented_header')
-                    outcat = Table.read(paths['output_cat'], 
-                                        format='ascii.commented_header', header_start=10)
-                    
+                    incat = Table.read(
+                        paths["predict"], format="ascii.commented_header"
+                    )
+                    outcat = Table.read(
+                        paths["output_cat"],
+                        format="ascii.commented_header",
+                        header_start=10,
+                    )
+
                     for col in outcat.colnames[1:]:
                         incat[col] = outcat[col]
 
@@ -713,20 +781,20 @@ class GPz(object):
             nmixtures = len(mixtures)
 
             if nmixtures == 1:
-                model = self.paths[0]['output_model']
+                model = self.paths[0]["output_model"]
 
                 run_string, paths = self.prep_gpz(
                     catalog,
                     outdir,
                     basename,
-                    mode = 'predict',
+                    mode="predict",
                     model=model,
                     mag_prefix=mag_prefix,
                     error_prefix=error_prefix,
                     z_col=z_col,
                     weight_col=weight_col,
                     output_min=output_min,
-                    output_max=output_max
+                    output_max=output_max,
                 )
             else:
                 output_capture = []
@@ -734,25 +802,29 @@ class GPz(object):
 
                 nbasis = total_basis_functions // nmixtures
 
-
-                pbar = tqdm(total=nmixtures, file=sys.stdout,
-                            dynamic_ncols=True, desc=f"GPz++ Run")
+                pbar = tqdm(
+                    total=nmixtures,
+                    file=sys.stdout,
+                    dynamic_ncols=True,
+                    desc=f"GPz++ Run",
+                )
 
                 with nostdout():
                     for i in range(nmixtures):
-                        pbar.set_description(f"GPz++ Run (mixture {i+1}/{nmixtures})")
+                        pbar.set_description(
+                            f"GPz++ Run (mixture {i+1}/{nmixtures})"
+                        )
                         mixture = mixtures[i]
                         mixture_cat = catalog[gmm_output["best"] == mixture]
 
-                        model = self.paths[i]['output_model']
-
+                        model = self.paths[i]["output_model"]
 
                         run_string, paths = self.prep_gpz(
                             mixture_cat,
                             outdir,
                             basename,
-                            label=f'm{mixture}',
-                            mode = 'predict',
+                            label=f"m{mixture}",
+                            mode="predict",
                             model=model,
                             mag_prefix=mag_prefix,
                             error_prefix=error_prefix,
@@ -776,7 +848,9 @@ class GPz(object):
 
                         else:
                             run = subprocess.run(
-                                run_string, shell=True, capture_output=capture_output,
+                                run_string,
+                                shell=True,
+                                capture_output=capture_output,
                             )
 
                             if run.returncode != 0 and not verbose:
@@ -790,7 +864,7 @@ class GPz(object):
 
                             output_capture.append(run)
                             path_dict[mixture] = paths
-                        
+
                         pbar.update(1)
 
                 pbar.close()
@@ -805,21 +879,22 @@ class GPz(object):
                     merged_output = []
 
                     for i, mixture in enumerate(mixtures):
-                        incat = Table.read(path_dict[mixture]['predict'], format='ascii.commented_header')
-                        outcat = Table.read(path_dict[mixture]['output_cat'], 
-                                            format='ascii.commented_header', header_start=10)
-                        
+                        incat = Table.read(
+                            path_dict[mixture]["predict"],
+                            format="ascii.commented_header",
+                        )
+                        outcat = Table.read(
+                            path_dict[mixture]["output_cat"],
+                            format="ascii.commented_header",
+                            header_start=10,
+                        )
+
                         for col in outcat.colnames[1:]:
                             incat[col] = outcat[col]
-                        
+
                         merged_output.append(incat)
-                    
+
                     merged_output = vstack(merged_output)
                     merged_output.sort("id")
 
                     return merged_output, path_dict
-
-
-
-            
-        

@@ -19,6 +19,7 @@ from time import sleep
 from tqdm import tqdm
 from tqdm.contrib import DummyTqdmFile
 
+
 @contextlib.contextmanager
 def std_out_err_redirect_tqdm():
     orig_out_err = sys.stdout, sys.stderr
@@ -32,7 +33,6 @@ def std_out_err_redirect_tqdm():
     # Always restore sys.stdout/err if necessary
     finally:
         sys.stdout, sys.stderr = orig_out_err
-
 
 
 def makedir(path):
@@ -106,7 +106,7 @@ class Params(object):
                 if line[0] not in ["#", "\n"]:
                     try:
                         parline = line.strip().split("#")[0]
-                    except:
+                    except(IndexError):
                         parline = line
                     parts = parline.strip().split("=")
                     self.params[parts[0].strip()] = parts[1].strip()
@@ -198,7 +198,7 @@ def flux_to_lupt(flux, fluxerr, b):
 def basic_lupt_soft(flux, flux_err, unit=u.uJy, f0=3631 * u.Jy, scale=1.05):
     try:
         f0 = f0.to(unit)
-    except:
+    except(u.UnitConversionError):
         raise
 
     snr = flux / flux_err
@@ -207,7 +207,7 @@ def basic_lupt_soft(flux, flux_err, unit=u.uJy, f0=3631 * u.Jy, scale=1.05):
     if flux_err.unit:
         try:
             rms_err = (np.nanmedian(flux_err[snr_cut])).to(unit)
-        except:
+        except (AttributeError, u.UnitConversionError):
             raise
 
     else:
@@ -215,5 +215,3 @@ def basic_lupt_soft(flux, flux_err, unit=u.uJy, f0=3631 * u.Jy, scale=1.05):
         rms_err = (np.nanmedian(flux_err[snr_cut]) * unit).to(unit)
 
     return scale * (rms_err.value / f0.value)
-
-
