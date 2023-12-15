@@ -509,14 +509,14 @@ class GPz(object):
 
                 if bf_distribution == "uniform":
                     nbasis = np.ones(nmixtures) * (total_basis_functions // nmixtures)
-                elif nbasis == "sqrt":
+                elif bf_distribution == "sqrt":
                     train_sizes = np.array([mixtures[f'm{i}'] for i in range(nmixtures)])
                     train_sqrt = np.sqrt(train_sizes)
                     train_sqrt /= np.sum(train_sqrt)
 
                     shared_basis = total_basis_functions - (nmixtures * min_basis_functions)
                     nbasis = np.round(train_sqrt * shared_basis) + min_basis_functions
-                elif nbasis == "linear":
+                elif bf_distribution == "linear":
                     train_sizes = np.array([mixtures[f'm{i}'] for i in range(nmixtures)])
                     train_linear = train_sizes / np.sum(train_sizes)
 
