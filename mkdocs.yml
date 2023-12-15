@@ -40,6 +40,7 @@ plugins:
 
 nav: 
  - Home: index.md
- - GMM Augmentation: gmm.md
  - Running GPz: gpz.md
+ - GMM Augmentation: gmm.md
+
   
