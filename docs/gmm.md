@@ -1,8 +1,33 @@
 # Gaussian Mixture Model Augmentation
 
+
 ## Example GMM Divide + Cost-sensitive Learning Calculations
 
 The basic functionality for the Gaussian Mixture Model (GMM) sample division and cost-sensitive learning is contained in the `GMMbasic` class. The training of the respective GMMs is done internally within the class, and is effectively a wrapper around the [sci-kit learn/GaussianMixture](https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html#sklearn.mixture.GaussianMixture) classes with all its functionality.
+
+```python
+from gpz_pype.gmm import GMMbasic
+
+# Define a function for calculating photo-z statistics
+def calcStats(photoz, specz):
+    cut = np.logical_and(photoz >= 0, specz >= 0.)
+    dz = photoz - specz
+    abs_dz = np.abs(dz)/(1+specz)
+
+    p90 = (abs_dz < np.percentile(abs_dz, 90.))
+    sigma_90 = np.sqrt(np.sum((dz[p90]/(1+specz[p90]))**2) / float(len(dz)))
+
+    bias = np.nanmedian(dz[cut]/(1+specz[cut]))
+    ol1 = (abs_dz > 0.15)
+    nmad = 1.48 * np.median( np.abs(dz[cut] - np.median(dz[cut])) / (1+specz[cut]))
+    ol2 = (abs_dz > (3*nmad))
+    OLF1 = np.sum( ol1[cut] ) / float(len(dz[cut]))
+    OLF2 = np.sum( ol2[cut] ) / float(len(dz[cut]))
+    
+    ol1_s, ol2_s = np.invert(ol1), np.invert(ol2)
+
+    return nmad, sigma_90, OLF1, bias
+```
 
 The key inputs that we need to define for `GMMbasic` are as follows:
 

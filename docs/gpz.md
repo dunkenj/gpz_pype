@@ -1,9 +1,107 @@
 
 # Basic GPz++ usage
 
+
+## Introduction
+For this example notebook we will use the CANDELS COSMOS catalogue as an input. This includes lots of photometry from both ground + space, but we will restrict analysis to just the HST filters for simplicity.
+
+Inputting the catalogue into GPz however requires some additional pre-processing. We start by extracting the general common columns and setting any missing `z_spec` values to `np.nan`:
+
+
+```python
+import numpy as np
+
+# Plotting modules
+%matplotlib inline
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams['figure.dpi']= 100
+
+# Astropy modules
+from astropy.table import Table, join, vstack, hstack
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+
+# Import required gpz_pype functions
+from gpz_pype.utilities import Params, set_gpz_path, basic_lupt_soft, flux_to_lupt
+from gpz_pype.base import GPz
+
+candels = Table.read('CANDELS.COSMOS.F160W.Processed.photz.fits', format='fits')
+
+catalogue = candels[['ID', 'RA', 'DEC', 'CLASS_STAR', 'FLAGS', 'EBV', 'z_spec']]
+
+catalogue['z_spec'][catalogue['z_spec'] < 0] = np.nan
+```
+
+To further trim the catalogue down, i next want to pull out only the flux/magnitude columns that belong to HST filters. In this case, columns that start with either 'ACS' or 'WFC'. As with `z_spec`, any value set as -99 in the input catalogue (i.e. no data) is converted to `np.nan`:
+
+
+```python
+for col in candels.colnames:
+    if col.startswith('ACS') or col.startswith('WFC'):
+        inst, filt, ext = col.split('_') # Split column name into 3 parts based on '_'
+        col_vals = candels[col]
+        col_vals[col_vals < -90] = np.nan
+        catalogue[f'{ext}_{filt}'] = col_vals # [FLUX/FLUXERR]_[FILTER]
+```
+
+To extract the filters that were found in the catalogue, we reprocess the column names to look for filters. This could have been done above, but since there were both MAG/FLUX columns this would have resulted in duplicates. So this is simpler:
+
+
+```python
+filters = [col.split('_')[1] for col in catalogue.colnames if col.startswith('FLUX_')]
+```
+
+### Asinh magnitudes
+Extensive past experience has shown that training machine learning using magnitudes can provide significantly better results than using linear flux values. This is particularly true for fields with very high dynamic range.
+
+However, the significant drawback of normal AB magnitudes is that they cannot be used at low S/N or for negative fluxes (consistent with zero). For GPz we therefore make use of asinh magnitudes, which remain real+positive for very low S/N that remain informative for non-detections without the need for additional missing value prediction etc. This is particularly key for high-redshift where the non-detection at bluer wavelengths is critical for the redshift estimate.
+
+Ideally, the softening parameter ($b$) used to derive asinh magnitudes from fluxes + uncertainties will be derived from the local noise on a per-object basis. However, when these are not available the use of a global softening parameter does not significantly impact photo-z results. 
+
+For convenience, `gpz_pype` includes a function for estimating a suitable global softening parameter based on a set of input fluxes+errors (_that are assumed to be representative of the full field_):
+
+
+```python
+# Calculate a softening parameter for each filter in the list of filters derived above:
+b_arr = [basic_lupt_soft(catalogue[f'FLUX_{filt}'], catalogue[f'FLUXERR_{filt}']) for filt in filters] 
+```
+
+With softening parameters calculated, we can then calculate the asinh magnitudes (also known as 'luptitudes') for each of our filters. These can be calculated using the `flux_to_lupt` function included in `gpz_pype`.
+
+
+```python
+# Make a new catalogue with the relevant key reference columns:
+lupt_cols = catalogue[['ID', 'RA', 'DEC', 'CLASS_STAR', 'FLAGS', 'EBV', 'z_spec']]
+
+check_nans = np.zeros(len(catalogue)) # Running counter of null values for each object
+
+for filt, b in zip(filters, b_arr):
+    lupt, lupterr = flux_to_lupt(catalogue[f'FLUX_{filt}'], # Input flux (uJy)
+                                 catalogue[f'FLUXERR_{filt}'], # Input uncertainty (uJy)
+                                 b, # Filter specific softening parameter
+                                ) 
+    
+    lupt_cols[f'lupt_{filt}'] = lupt
+    lupt_cols[f'lupterr_{filt}'] = lupterr
+    
+    check_nans += np.isnan(lupt) # Update nan counter for this filter
+```
+
+After filling all the columns, for the purpose of training GPz we want to cut our catalogue down to those sources with values in all the filters we want to use and for which there is a spectroscopic redshift:
+
+
+```python
+good = (check_nans == 0) # 'Good' sources for training are those with 0 NaNs
+
+cat = lupt_cols[good * (np.isnan(lupt_cols['z_spec']) == False)] # Keep only good sources with z_spec
+```
+
 The following code assumes that `gpz++` is correctly installed on the system and that it can be run through the command line without issue. The `gpz_pype` classes simply wrap around `gpz++` and streamline the book-keeping required when using more complicated splitting+weighting of training sample.
 
 The path to `gpz++` can be set as a system variable so this step might not be required in future. It can also be input directly into the `GPz` class below, but for safety we can use the convenience function `set_gpz_path` to set this for the current session.
+
+## Running GPz
 
 
 ```python
