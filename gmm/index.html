@@ -322,13 +322,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    Introduction
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#example-gmm-divide-cost-sensitive-learning-calculations" class="md-nav__link">
     Example GMM Divide + Cost-sensitive Learning Calculations
   </a>
@@ -461,13 +454,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    Introduction
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#example-gmm-divide-cost-sensitive-learning-calculations" class="md-nav__link">
     Example GMM Divide + Cost-sensitive Learning Calculations
   </a>
@@ -584,9 +570,30 @@
 
 
 <h1 id="gaussian-mixture-model-augmentation">Gaussian Mixture Model Augmentation</h1>
-<h2 id="introduction">Introduction</h2>
 <h2 id="example-gmm-divide-cost-sensitive-learning-calculations">Example GMM Divide + Cost-sensitive Learning Calculations</h2>
 <p>The basic functionality for the Gaussian Mixture Model (GMM) sample division and cost-sensitive learning is contained in the <code>GMMbasic</code> class. The training of the respective GMMs is done internally within the class, and is effectively a wrapper around the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html#sklearn.mixture.GaussianMixture">sci-kit learn/GaussianMixture</a> classes with all its functionality.</p>
+<pre><code class="language-python">from gpz_pype.gmm import GMMbasic
+
+# Define a function for calculating photo-z statistics
+def calcStats(photoz, specz):
+    cut = np.logical_and(photoz &gt;= 0, specz &gt;= 0.)
+    dz = photoz - specz
+    abs_dz = np.abs(dz)/(1+specz)
+
+    p90 = (abs_dz &lt; np.percentile(abs_dz, 90.))
+    sigma_90 = np.sqrt(np.sum((dz[p90]/(1+specz[p90]))**2) / float(len(dz)))
+
+    bias = np.nanmedian(dz[cut]/(1+specz[cut]))
+    ol1 = (abs_dz &gt; 0.15)
+    nmad = 1.48 * np.median( np.abs(dz[cut] - np.median(dz[cut])) / (1+specz[cut]))
+    ol2 = (abs_dz &gt; (3*nmad))
+    OLF1 = np.sum( ol1[cut] ) / float(len(dz[cut]))
+    OLF2 = np.sum( ol2[cut] ) / float(len(dz[cut]))
+
+    ol1_s, ol2_s = np.invert(ol1), np.invert(ol2)
+
+    return nmad, sigma_90, OLF1, bias
+</code></pre>
 <p>The key inputs that we need to define for <code>GMMbasic</code> are as follows:</p>
 <ul>
 <li><code>X_pop</code> : The feature array for the reference population.</li>
@@ -656,8 +663,6 @@ weights_run, paths = test.run_training( # All of these as above but with minor c
       weight_col='weights', # Now weight training by this column
     )
 </code></pre>
-<pre><code>WARNING:root:Removing existing model file test_dir/candels_cosmos_weighted_model.dat
-</code></pre>
 <pre><code class="language-python">Fig, Ax = plt.subplots(1,2,figsize=(9,4))
 
 Ax[0].errorbar(simple_run['z_spec'], simple_run['value'], 
@@ -690,9 +695,6 @@ for i, ax in enumerate(Ax):
     ax.text(0.1, 5.0, f'OLF = {stats[i][2]:.3f}')
 
 
-</code></pre>
-<pre><code>/var/folders/4h/l82f8_jx1476t0k78sdtfq5w0000gn/T/ipykernel_70492/3209683446.py:3: RuntimeWarning: invalid value encountered in log10
-  return np.log10(1+x)
 </code></pre>
 <p><img alt="png" src="../figures/gpz_pype%20-%20How-to%20guide_39_1.png" /></p>
 <p>At face value, the weights have not resulted in an overall statistical improvement to the photo-$z$ estimates. But by eye, there is definitely some improvement at the higher redshift end. For now, we move onto the GMM-Divide option.</p>
