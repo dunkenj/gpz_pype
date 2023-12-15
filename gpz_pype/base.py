@@ -509,7 +509,7 @@ class GPz(object):
 
                 if bf_distribution == "uniform":
                     nbasis = np.ones(nmixtures) * (total_basis_functions // nmixtures)
-                    
+
                 elif bf_distribution == "sqrt":
                     train_sizes = np.array([np.sum(gmm_output[f'm{i}']==True) for i in range(nmixtures)])
                     train_sqrt = np.sqrt(train_sizes)
@@ -557,7 +557,7 @@ class GPz(object):
                             valid_fraction=valid_fraction,
                             do_iteration=do_iteration,
                             iter_cov=iter_cov,
-                            basis_functions=nbasis,
+                            basis_functions=nbasis[i],
                         )
 
                         if bash_script:
