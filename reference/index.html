@@ -735,7 +735,7 @@ script.</p>
 
 
 <h2 id="gpz_pype.base.GPz.prep_gpz" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">prep_gpz</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">basis_functions</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">prep_gpz</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">basis_functions</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-09</span><span class="p">,</span> <span class="n">grad_tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
 
 </h2>
 
@@ -983,6 +983,62 @@ Default is False.</p>
                 <code>&#39;gpvc&#39;</code>
           </td>
         </tr>
+        <tr>
+          <td><code>basis_functions</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of basis functions to use.  Default is 50.</p>
+            </div>
+          </td>
+          <td>
+                <code>50</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_iter</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Maximum number of iterations.  Default is 500.</p>
+            </div>
+          </td>
+          <td>
+                <code>500</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>tol</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Tolerance for convergence.  Default is 1e-9.</p>
+            </div>
+          </td>
+          <td>
+                <code>1e-09</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>grad_tol</code></td>
+          <td>
+                <code>(float, optional)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Tolerance for gradient convergence.  Default is 1e-5.</p>
+            </div>
+          </td>
+          <td>
+                <code>1e-05</code>
+          </td>
+        </tr>
     </tbody>
   </table>
 
@@ -1079,7 +1135,7 @@ Default is False.</p>
 
 
 <h2 id="gpz_pype.base.GPz.run_training" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">run_training</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">gmm_output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bash_script</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">id_col</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">total_basis_functions</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bf_distribution</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">min_basis_functions</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">run_training</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">gmm_output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bash_script</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mag_prefix</span><span class="o">=</span><span class="s1">&#39;mag_&#39;</span><span class="p">,</span> <span class="n">error_prefix</span><span class="o">=</span><span class="s1">&#39;magerr_&#39;</span><span class="p">,</span> <span class="n">z_col</span><span class="o">=</span><span class="s1">&#39;z_spec&#39;</span><span class="p">,</span> <span class="n">id_col</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">weight_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_max</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">test_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">valid_fraction</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">do_iteration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_cov</span><span class="o">=</span><span class="s1">&#39;gpvc&#39;</span><span class="p">,</span> <span class="n">total_basis_functions</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bf_distribution</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">min_basis_functions</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-09</span><span class="p">,</span> <span class="n">grad_tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1357,6 +1413,48 @@ each mixture, respectively.</p>
           </td>
         </tr>
         <tr>
+          <td><code>max_iter</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Maximum number of iterations.  Default is 500.</p>
+            </div>
+          </td>
+          <td>
+                <code>500</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>tol</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Tolerance for convergence.  Default is 1e-9.</p>
+            </div>
+          </td>
+          <td>
+                <code>1e-09</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>grad_tol</code></td>
+          <td>
+                <code>(float, optional)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Tolerance for gradient convergence.  Default is 1e-5.</p>
+            </div>
+          </td>
+          <td>
+                <code>1e-05</code>
+          </td>
+        </tr>
+        <tr>
           <td><code>verbose</code></td>
           <td>
                 <code>bool</code>
@@ -1383,6 +1481,40 @@ filename.</p>
           </td>
           <td>
                 <code>{}</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>merged_output</code></td>          <td>
+                <code>astropy.<span title="astropy.table">table</span>.<span title="astropy.table.Table">Table</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Merged output catalog.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>paths</code></td>          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dictionary of paths to output files.</p>
+            </div>
           </td>
         </tr>
     </tbody>
