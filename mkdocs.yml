@@ -23,7 +23,15 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
-    
+  
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  language: en
+
+  
+
 repo_url: https://github.com/dunkenj/gpz_pype
 repo_name: GitHub/gpz_pype
 
@@ -37,6 +45,7 @@ plugins:
           docstring_style: numpy
         rendering:
           show_source: false
+      
 
 nav: 
  - Home: index.md
