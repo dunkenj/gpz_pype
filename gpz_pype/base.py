@@ -540,7 +540,7 @@ class GPz(object):
                             f"GPz++ Run (mixture {i+1}/{nmixtures})"
                         )
                         mixture = mixtures[i]
-                        mixture_cat = catalog[gmm_output["best"] == mixture]
+                        mixture_cat = catalog[gmm_output[f'm{i}']==True]
 
                         run_string, paths = self.prep_gpz(
                             mixture_cat,
@@ -801,8 +801,6 @@ class GPz(object):
             else:
                 output_capture = []
                 path_dict = {}
-
-                nbasis = total_basis_functions // nmixtures
 
                 pbar = tqdm(
                     total=nmixtures,
