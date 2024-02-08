@@ -140,6 +140,9 @@ class GPz(object):
         do_iteration=False,
         iter_cov="gpvc",
         basis_functions=50,
+        max_iter = 500,
+        tol = 1e-9,
+        grad_tol = 1e-5,
     ):
         """
         Prepare gpz++ input catalogues and parameter files
@@ -180,6 +183,14 @@ class GPz(object):
             Default is False.
         iter_cov : str, optional
             Covariance type to use for 2nd iteration.  Default is 'gpvc'.
+        basis_functions : int, optional
+            Number of basis functions to use.  Default is 50.
+        max_iter : int, optional
+            Maximum number of iterations.  Default is 500.
+        tol : float, optional
+            Tolerance for convergence.  Default is 1e-9.
+        grad_tol : float, optional 
+            Tolerance for gradient convergence.  Default is 1e-5.
 
         Returns
         -------
@@ -204,6 +215,10 @@ class GPz(object):
         run_params["OUTPUT_COLUMN"] = z_col
         run_params["OUTPUT_MIN"] = output_min
         run_params["OUTPUT_MAX"] = output_max
+
+        run_params["MAX_ITER"] = max_iter
+        run_params["TOLERANCE"] = tol
+        run_params["GRAD_TOLERANCE"] = grad_tol
 
         if weight_col is not None:
             run_params["WEIGHT_COLUMN"] = weight_col
@@ -252,6 +267,7 @@ class GPz(object):
         elif mode == "predict":
             output_model = model
             run_params["REUSE_MODEL"] = "1"
+            run_params["SAVE_MODEL"] = "0"
 
             # Run GPz
             predict_path = f"{rootname}_predict.txt"
@@ -290,6 +306,7 @@ class GPz(object):
         if mode == "train":
             file_paths["test"] = test_path
             file_paths["train"] = train_path
+            
         elif mode == "predict":
             file_paths["predict"] = predict_path
             try:
@@ -323,6 +340,9 @@ class GPz(object):
         total_basis_functions=100,
         bf_distribution="uniform",
         min_basis_functions=10,
+        max_iter = 500,
+        tol = 1e-9,
+        grad_tol = 1e-5,
         verbose=False,
         **kwargs,
     ):
@@ -371,6 +391,12 @@ class GPz(object):
             each mixture, respectively.
         min_basis_functions : int, optional
             Minimum number of basis functions per mixture.  Default is 10.
+        max_iter : int, optional
+            Maximum number of iterations.  Default is 500.
+        tol : float, optional
+            Tolerance for convergence.  Default is 1e-9.
+        grad_tol : float, optional 
+            Tolerance for gradient convergence.  Default is 1e-5.
         verbose : bool, optional
             If True, will print out GPz++ output.  Default is False.
         **kwargs : dict, optional
@@ -379,7 +405,10 @@ class GPz(object):
 
         Returns
         -------
-
+        merged_output : astropy.table.Table
+            Merged output catalog.
+        paths : dict
+            Dictionary of paths to output files.
 
         """
 
@@ -409,6 +438,9 @@ class GPz(object):
                 do_iteration=do_iteration,
                 iter_cov=iter_cov,
                 basis_functions=total_basis_functions,
+                max_iter = max_iter,
+                tol = tol,
+                grad_tol = grad_tol,
             )
 
             if bash_script:
@@ -898,3 +930,46 @@ class GPz(object):
                     merged_output.sort("id")
 
                     return merged_output, path_dict
+                
+    def save(self, filename):
+        """
+        Save the GMM model to file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to save the GPz class.
+
+        """
+        import pickle
+
+        data = {
+            "params": self.params,
+            "paths": self.paths,
+            "gpz_path": self.gpz_path,
+            "ncpu": self.ncpu,
+        }
+
+        # Save the GMM models
+        with open(filename, "wb") as f:
+            pickle.dump(data, f)
+
+    def load(self, filename):
+        """
+        Load the GMM model from file.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to load the GPz class from.
+
+        """
+        import pickle
+
+        with open(filename, "rb") as f:
+            data = pickle.load(f)
+
+        self.params = data["params"]
+        self.paths = data["paths"]
+        self.gpz_path = data["gpz_path"]
+        self.ncpu = data["ncpu"]

@@ -541,6 +541,10 @@ class XDGMMbasic(GMMbasic):
         return self
 
 
+
+
+
+
 def kl_score(
     X_pop, X_train, weights=None, nbins=30, min_pct=0.1, max_pct=99.9
 ):
@@ -642,4 +646,12 @@ if __name__ == "__main__":
     ax[0].set_title("Original data")
     ax[1].scatter(X_train[:, 2], X_train[:, 3], c=weights)
     # ax[1].set_title("GMM")
+
+    # Add a histogram for the weights to the right plot
+    ax2 = ax[1].twinx()
+    ax2.hist(weights, bins=20, alpha=0.5, color="k")
+    ax2.set_ylabel("Histogram of weights")
+
+    
+
     plt.show()

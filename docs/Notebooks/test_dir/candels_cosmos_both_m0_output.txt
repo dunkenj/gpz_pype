@@ -1,0 +1,21 @@
+# GPz version: 1.0.0-854e8f1
+# Training catalog file:   /Users/duncan/Astro/Photoz/gpz_pype/docs/Notebooks/test_dir/candels_cosmos_both_m0_train.txt
+# Prediction catalog file: /Users/duncan/Astro/Photoz/gpz_pype/docs/Notebooks/test_dir/candels_cosmos_both_m0_test.txt
+# Number of features:         4
+# Number of basis functions:  25
+# Prior mean function:        CONSTANT_PREPROCESS
+# Weighting scheme:           CUSTOM
+# Input normalization scheme: WHITEN
+# Covariance type:            VARIABLE_DIAGONAL (GPVD)
+# Output uncertainty type:    INPUT_DEPENDENT
+#    id          value    uncertainty    var.density   var.tr.noise   var.in.noise
+  7891   1.981254e+00   1.200910e+00   3.895644e-02   1.336578e+00   6.665031e-02
+ 35727   5.249333e+00   1.271281e+00   1.952511e-02   1.569018e+00   2.761295e-02
+  9895   2.902636e+00   1.226376e+00   2.082952e-02   1.394186e+00   8.898287e-02
+ 19516   3.410572e+00   1.296615e+00   5.643316e-02   1.527391e+00   9.738594e-02
+ 17586   2.170381e+00   1.208211e+00   2.681968e-02   1.308641e+00   1.243143e-01
+ 20867   3.444232e+00   1.198347e+00   1.762000e-02   1.265755e+00   1.526612e-01
+ 32480   3.778016e+00   1.248492e+00   1.503476e-02   1.280481e+00   2.632175e-01
+  6772   2.865166e+00   1.153083e+00   8.383491e-03   1.265776e+00   5.544038e-02
+   316   2.673044e+00   1.179284e+00   1.187971e-02   1.256184e+00   1.226473e-01
+ 18412   2.453887e+00   1.212011e+00   3.954558e-02   1.377688e+00   5.173727e-02
