@@ -341,8 +341,8 @@ class GPz(object):
         bf_distribution="uniform",
         min_basis_functions=10,
         max_iter = 500,
-        tol = 1e-9,
-        grad_tol = 1e-5,
+        tol = 1e-8,
+        grad_tol = 1e-4,
         verbose=False,
         **kwargs,
     ):
@@ -534,6 +534,9 @@ class GPz(object):
                     do_iteration=do_iteration,
                     iter_cov=iter_cov,
                     basis_functions=total_basis_functions,
+                    max_iter = max_iter,
+                    tol = tol,
+                    grad_tol = grad_tol,
                 )
             else:
                 output_capture = []
@@ -589,6 +592,9 @@ class GPz(object):
                             valid_fraction=valid_fraction,
                             do_iteration=do_iteration,
                             iter_cov=iter_cov,
+                            max_iter=max_iter,
+                            tol = tol,
+                            grad_tol = grad_tol,
                             basis_functions=nbasis[i],
                         )
 
