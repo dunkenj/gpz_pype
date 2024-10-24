@@ -234,16 +234,16 @@ class GPz(object):
             run_params["REUSE_MODEL"] = "0"
 
             # Run GPz
-            index = np.arange(len(catalog))
-            i_train, i_test = train_test_split(index, test_size=test_fraction)
+            df = catalog.to_pandas()
+            df_train, df_test = train_test_split(df, test_size=test_fraction)
 
             train_path = f"{rootname}_train.txt"
-            catalog[i_train].write(
+            Table.from_pandas(df_train).write(
                 train_path, format="ascii.commented_header", overwrite=True
             )
 
             test_path = f"{rootname}_test.txt"
-            catalog[i_test].write(
+            Table.from_pandas(df_test).write(
                 test_path, format="ascii.commented_header", overwrite=True
             )
 
@@ -575,7 +575,7 @@ class GPz(object):
                             f"GPz++ Run (mixture {i+1}/{nmixtures})"
                         )
                         mixture = mixtures[i]
-                        mixture_cat = catalog[gmm_output[f'm{i}']==True]
+                        mixture_cat = catalog[gmm_output[f'm{i}'].astype('str') == 'True']
 
                         run_string, paths = self.prep_gpz(
                             mixture_cat,

@@ -32,5 +32,5 @@ BF_POSITION_SEED               = 55
 FUZZING                        = 0
 FUZZING_SEED                   = 97
 MAX_ITER                       = 500
-TOLERANCE                      = 1e-9
-GRAD_TOLERANCE                 = 1e-5
+TOLERANCE                      = 1e-08
+GRAD_TOLERANCE                 = 0.0001

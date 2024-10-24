@@ -133,3 +133,5 @@ dmypy.json
 
 # templates
 .github/templates/*
+docs/Notebooks/divide_test.py
+docs/Notebooks/test_dir/.DS_Store
